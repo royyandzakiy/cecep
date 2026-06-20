@@ -83,4 +83,9 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 # target_compile_definitions(${PROJECT_NAME} PRIVATE ANY_MACRO_HERE)
 
 # --- Core Dependencies ---
-target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt CLI11::CLI11 ftxui::component)
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE fmt::fmt
+          CLI11::CLI11
+          ftxui::component
+          cpp-subprocess::subprocess)
