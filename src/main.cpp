@@ -20,29 +20,21 @@ std::string select_cpp_standard() {
         "C++11", "C++14", "C++17", "C++20", "C++23", "C++26"
     };
     int selected = 0;
-    bool done = false;
 
-    auto menu = Menu(&standards, &selected);
-    auto button = Button("Select", [&] { done = true; });
+    MenuOption option;
+    option.on_enter = screen.ExitLoopClosure();
 
-    auto layout = Container::Vertical({
-        menu,
-        button,
-    });
+    auto menu = Menu(&standards, &selected, option);
 
-    auto renderer = Renderer(layout, [&] {
+    auto renderer = Renderer(menu, [&] {
         return vbox({
-            text("Choose a C++ standard:") | bold,
-            separator(),
-            menu->Render() | flex,
-            separator(),
-            button->Render() | center,
-        }) | border;
+            text("Choose a C++ standard (↑/↓, Enter to confirm):"),
+            menu->Render(),
+        });
     });
 
     screen.Loop(renderer);
 
-    // Return the selected standard (or empty if cancelled – but we always pick)
     return standards[selected];
 }
 
