@@ -1,35 +1,22 @@
 # DEVELOPMENT
 
-## Prio
+- fix wierd ftxui dropdown selection
 
-- add conan
-  - add option to choose vcpkg vs conan
-- add dev-container: use clang-cl, clang, gcc16
-  - add windows-setup.ps1 with winget + microsoft.visualstudio
+---
 
-## Backlog
+```bash
+ccp setup
+ccp projectname normal/full/min/lib/qml
+ccp lib/l list/add/rem name
+ccp tool/t list/install/run name
+- clang tidy
+ccp cbrm (clean, build, run, run multiple) presetname
+ccp harden list/run
+- lists all hardening tools (sanitizers), their availability, the cmake options status ON/OFF
+ccp ai context/tree/adr/readme
+```
 
-- using clang, add option to choose asan vs tsan/msan (fix current bugs)
-  - add all static analyzers (gcc, then clang-cl, msvc)
-  - add .clangd
-  - ensure all project_options.cmake works fine
-- CI github actions:
-  - os: add windows & linux
-  - compilers: gcc16, clang, apple clang, msvc
-  - fuzz build matrix (random seed)
-- add INSTALL to create as library, add in option
-  - merge with win lib
+notes:
 
-## Skip
-
-- open for contributor: issues, discussions, contributions
-  - fix readme: logo & badge, pitch (problem to solve), quick start (inline code example), live demo
-  - add complete docs suite (tutorials, how-to-guides, understand, reference, release blog, release/change log)
-  - add compiler explore quick test
-- profiling
-  - use perf + [flamegraph](https://github.com/brendangregg/FlameGraph)
-  - add tracey
-- add more hardenning
-  - use sourcetrail app
-  - code coverage: find out whats best practice todo in CI after generate coverage report XML (other than via codecov)
-- add doxyfile & doxygen
+- when selection like tool,presetname, can press up down to select
+- use toml to enable pckg mgr agnostic (storing library names/versions)
