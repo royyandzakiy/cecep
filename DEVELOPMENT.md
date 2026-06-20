@@ -1,6 +1,12 @@
 # DEVELOPMENT
 
-- fix wierd ftxui dropdown selection
+- prjctname as opt
+  - changes @prjctname@
+- remove .git, call git init
+- create cpp min
+  - add ccp min
+- create lib list > ccp can printout and add
+  - chabge gtest as vcpkg, no fetch content pls
 
 ---
 
