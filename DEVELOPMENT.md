@@ -12,11 +12,11 @@
 
 ```bash
 ccp setup
-ccp projectname normal/full/min/lib/qml
-ccp lib/l list/add/rem name
-ccp tool/t list/install/run name
-- clang tidy
-ccp cbrm (clean, build, run, run multiple) presetname
+ccp projectname -m normal/full/min/lib/qml
+ccp lib/-l list/add/rem name
+ccp tool/-t list/install/run name
+- profilers
+ccp cbrm (clean, build, run, run multiple) presetname (skip)
 ccp harden list/run
 - lists all hardening tools (sanitizers), their availability, the cmake options status ON/OFF
 ccp ai context/tree/adr/readme
@@ -25,4 +25,5 @@ ccp ai context/tree/adr/readme
 notes:
 
 - when selection like tool,presetname, can press up down to select
+- retains selection history, as listed
 - use toml to enable pckg mgr agnostic (storing library names/versions)
