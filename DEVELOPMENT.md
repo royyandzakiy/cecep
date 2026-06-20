@@ -2,9 +2,11 @@
 
 - prjctname as opt
   - changes @prjctname@
+  - set @CPP_VERSION@
 - remove .git, call git init
 - create cpp min
   - add ccp min
+  -vadd cpp qml
 - create lib list > ccp can printout and add
   - chabge gtest as vcpkg, no fetch content pls
 
