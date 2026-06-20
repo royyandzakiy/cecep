@@ -8,7 +8,7 @@ include(cmake/config_vcpkg.cmake)
 # Project Configuration
 #==============================================================================
 project(
-  cmake_project_template
+  cecep
   LANGUAGES CXX
   VERSION 1.0.0)
 

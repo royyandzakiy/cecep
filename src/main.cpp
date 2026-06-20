@@ -36,7 +36,7 @@ std::string select_cpp_standard() {
             separator(),
             menu->Render() | flex,
             separator(),
-            button->Render() | align_center,
+            button->Render() | center,
         }) | border;
     });
 
