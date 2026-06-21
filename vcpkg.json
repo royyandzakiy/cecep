@@ -2,6 +2,7 @@
   "dependencies": [
     "cli11",
     "fmt",
-    "ftxui"
+    "ftxui",
+    "tomlplusplus"
   ]
 }

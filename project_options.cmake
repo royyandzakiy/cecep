@@ -1,7 +1,8 @@
 # project_options.cmake
 # Compiler sanitizers
+option(ENABLE_STRICT_COMPILER "Strict compiler options, sees warnings as errors!" OFF)
+
 option(SETUP_VCPKG "Check & setup vcpkg installation" ON)
-option(ENABLE_STRICT_COMPILER "Strict compiler options, sees warnings as errors!" ON)
 option(VCPKG_MANIFEST_MODE "VCPKG in Manifest Mode, else Global Mode" ON)
 
 option(ENABLE_SANITIZERS "Enable static & runtime sanitizers" OFF)

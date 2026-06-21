@@ -59,6 +59,7 @@ include(cmake/profiler.cmake)
 find_package(fmt CONFIG REQUIRED)
 find_package(ftxui CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -89,4 +90,5 @@ target_link_libraries(
   PRIVATE fmt::fmt
           CLI11::CLI11
           ftxui::component
-          cpp-subprocess::subprocess)
+          cpp-subprocess::subprocess
+          tomlplusplus::tomlplusplus)
