@@ -1,5 +1,6 @@
 #include <CLI/CLI.hpp>
 #include <cpp-subprocess/subprocess.hpp>
+#include <cstdio>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <string>
@@ -12,7 +13,7 @@ namespace sp = subprocess;
 // #include <ftxui/dom/elements.hpp>
 
 int main(int argc, char **argv) {
-	// std::string_view url{"https://github.com/royyandzakiy/cpp-project-template"};
+	std::string url{"https://github.com/royyandzakiy/cpp-project-template"};
 	std::string dest_folder{"myproj"};
 
 	CLI::App app{"Cecep C++ Project Generator"};
@@ -23,12 +24,12 @@ int main(int argc, char **argv) {
 	CLI11_PARSE(app, argc, argv);
 
 	// call git clone, change folder name
-	// auto p = sp::Popen({"git", "clone", url, dest_folder}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	auto p = sp::Popen({"git", "clone", url, dest_folder}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
 
-	// auto rc = p.wait();
+	auto rc = p.wait();
 
-	// if (rc != 0)
-	// 	fmt::println(stderr, "Git clone error code: {}", rc);
+	if (rc != 0)
+		fmt::println(stderr, "Git clone error code: {}", rc);
 
 	return 0;
 }
