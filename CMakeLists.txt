@@ -19,7 +19,7 @@ endif()
 #=========================
 include(cmake/version.cmake) # reads version.txt -> PROJECT_VERSION_STRING (before project())
 project(
-  cpp_project_template
+  cecep
   LANGUAGES CXX
   VERSION ${PROJECT_VERSION_STRING})
 
