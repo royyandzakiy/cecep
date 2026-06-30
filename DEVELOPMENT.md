@@ -7,6 +7,7 @@
 ---
 
 - interactive mode to produce toml: proj name, cpp std, testing, library/exec, conan/vcpkg
+- can modify toml on the fly then reflected in the app (error if part cannot be found)
 
 ---
 
