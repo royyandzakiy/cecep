@@ -17,4 +17,4 @@
 ---
 
 - connect sanitizer to debug app
-- create seperate examples for each component
+- activate clang tidy
