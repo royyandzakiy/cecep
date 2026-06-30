@@ -32,7 +32,7 @@ jobs:
       matrix:
         preset: [clang-linux-debug, clang-linux-release, gcc-linux-debug, gcc-linux-release, clang-linux-asan, clang-linux-tsan, clang-linux-full]
     env:
-      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'vcpkg' }}
+      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'conan' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,7 +103,7 @@ jobs:
       matrix:
         preset: [msvc-debug, msvc-release, msvc-asan, clang-cl-debug, clang-cl-release, mingw-debug, mingw-release] # todo: clang-cl-asan still fails to build
     env:
-      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'vcpkg' }}
+      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'conan' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -169,7 +169,7 @@ jobs:
       matrix:
         preset: [appleclang-debug, appleclang-release]
     env:
-      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'vcpkg' }}
+      PKG_MANAGER: ${{ github.event.inputs.pkg-manager || 'conan' }}
     steps:
       - uses: actions/checkout@v4
         with:
