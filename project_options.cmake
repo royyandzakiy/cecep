@@ -19,7 +19,7 @@ option(BUILD_TESTING "Build the unit tests under test/" OFF)
 option(BUILD_EXAMPLES "Build the examples/ demos (MyLib consumer, Tracy/Perfetto examples, …)" OFF)
 
 # ------ Package Manager ------
-set(PKG_MANAGER "vcpkg" CACHE STRING "Dependency provider: vcpkg | conan | none")
+set(PKG_MANAGER "conan" CACHE STRING "Dependency provider: vcpkg | conan | none")
 set_property(CACHE PKG_MANAGER PROPERTY STRINGS vcpkg conan none)
 if(PKG_MANAGER STREQUAL "vcpkg")
   option(VCPKG_MANIFEST_MODE "Use vcpkg manifest mode (ON) or classic/global mode (OFF)" ON)
@@ -42,8 +42,8 @@ option(ENABLE_CLANG_TIDY "Run clang-tidy on first-party production code (no-op i
 option(ENABLE_COVERAGE "Instrument for code coverage and add the 'coverage' target (runs tests + generates report)" OFF)
 
 # ------ Compile-Time Optimizations ------
-option(ENABLE_CCACHE "Wrap compiles in ccache — huge speedup when switching branches or re-configuring" OFF)
-option(ENABLE_FAST_LINKER "Use mold/lld instead of default linker — dramatically faster linking (no-op if absent)" OFF)
+option(ENABLE_CCACHE "Wrap compiles in ccache — huge speedup when switching branches or re-configuring" ON)
+option(ENABLE_FAST_LINKER "Use mold/lld instead of default linker — dramatically faster linking (no-op if absent)" ON)
 option(ENABLE_PCH "Precompile heavy headers (STL, …) — faster full builds, slower single-file incremental rebuilds" OFF)
 option(ENABLE_UNITY_BUILD "Batch .cpp files into unity translation units — fastest clean builds, kills incremental builds" OFF)
 option(ENABLE_CLANG_BUILD_ANALYZER "Clang -ftime-trace + ClangBuildAnalyzer target — profile what takes time during compilation (Clang only)" OFF)

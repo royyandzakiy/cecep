@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 		->default_val("my_project")
 		->capture_default_str();
 	app.add_option("type,-t,--type", selected_template_type, "The type of template")
-		->default_val("full")
+		->default_val("min")
 		->check(CLI::IsMember({"full", "min"})) // Validate input
 		->capture_default_str();
 
