@@ -1,2 +1,5 @@
 find_package(fmt CONFIG REQUIRED)
-find_package(scn CONFIG REQUIRED)
+find_package(ftxui CONFIG REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
+find_package(nextsilicon-cpp-subprocess CONFIG REQUIRED)

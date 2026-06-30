@@ -61,7 +61,7 @@ include(project_dependencies.cmake)
 #=========================
 # Add or remove targets as needed
 if(BUILD_APP)
-  add_subdirectory(src/myapp) # standalone hello-world binary
+  add_subdirectory(src) # standalone hello-world binary
 endif()
 if(BUILD_EXAMPLES)
   add_subdirectory(examples) # AFTER src/mylib so the example can link the MyLib target
