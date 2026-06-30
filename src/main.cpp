@@ -1,14 +1,28 @@
-#include <CLI/CLI.hpp>
+// #include <CLI/CLI.hpp>
 #include <cpp-subprocess/subprocess.hpp>
-#include <filesystem>
-#include <iostream>
+#include <cstdio>
+#include <fmt/base.h>
+#include <fmt/color.h>
+#include <string>
+
+namespace sp = subprocess;
 
 // FTXUI headers
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
+// #include <ftxui/component/component.hpp>
+// #include <ftxui/component/screen_interactive.hpp>
+// #include <ftxui/dom/elements.hpp>
 
 int main() {
+	// call git clone, change folder name
+	std::string url{"https://github.com/royyandzakiy/cpp-project-template"}, dest_folder{"myproj"};
+
+	auto p = sp::Popen({"git", "clone", url, dest_folder}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+
+	auto rc = p.wait();
+
+	if (rc != 0)
+		fmt::println(stderr, "Git clone error code: {}", rc);
+
 	return 0;
 }
 
@@ -69,7 +83,7 @@ int main() {
 
 // 	// 2. Run git clone using cpp-subprocess
 // 	std::vector<std::string> args = {"git", "clone", repo_url, clone_dir.string()};
-// 	auto proc = subprocess::Popen(args);
+// 	auto proc = sp::Popen(args);
 // 	auto status = proc.wait();
 // 	if (status != 0) {
 // 		std::cerr << "git clone failed (exit code " << status << ")\n";
