@@ -1,94 +1,80 @@
 cmake_minimum_required(VERSION 3.28)
 
-include(local_options.cmake OPTIONAL)
-include(project_options.cmake)
-include(cmake/config_vcpkg.cmake)
+#=========================
+# Project Options & Package Manager
+#=========================
+include(project_options.local.cmake OPTIONAL) # create & modify to change locally (only for you)
+include(project_options.cmake) # modify to change for all developers
 
-#==============================================================================
+# If this project is consumed via add_subdirectory(), the parent owns the provider/toolchain, hence
+# omit this setup_package_maanager(). But because before project(), PROJECT_IS_TOP_LEVEL isn't set yet
+# hence use the source-dir check
+include(cmake/package_manager.cmake)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  setup_package_manager() # dispatches to vcpkg / conan / none per PKG_MANAGER
+endif()
+
+#=========================
 # Project Configuration
-#==============================================================================
+#=========================
+include(cmake/version.cmake) # reads version.txt -> PROJECT_VERSION_STRING (before project())
 project(
-  cecep
+  cpp_project_template
   LANGUAGES CXX
-  VERSION 1.0.0)
+  VERSION ${PROJECT_VERSION_STRING})
 
-#==============================================================================
-# Version Management
-#==============================================================================
-include(cmake/version.cmake)
-generate_version_header()
-source_group("Generated" FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h")
-message(STATUS "Building ${PROJECT_NAME} version ${PROJECT_VERSION}")
-
-#==============================================================================
-# Compiler Configuration
-#==============================================================================
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(WIN32)
-  set(CMAKE_DEBUG_POSTFIX d)
+#=========================
+# Formatter, Linter, Profiler, Accelerator
+#=========================
+if(PROJECT_IS_TOP_LEVEL) # format & setup clangd
+  include(cmake/format.cmake) # format / format-check / tidy-all targets
+  include(cmake/clangd.cmake) # mirror compile_commands.json for clangd
 endif()
 
-if(MSVC)
-  add_compile_options(/W4 /permissive- /utf-8)
-  if(ENABLE_STRICT_COMPILER)
-    add_compile_options(/WX /GS) # warning as errors. Stack guards
-    add_compile_options(
-      /Zc:preprocessor # Critical for modern C++ macro-heavy libs
-      /Zc:__cplusplus # Ensures __cplusplus macro reports correctly
-    )
-  endif()
+include(cmake/compiler.cmake)            # warnings, strict, build-type guard, debug postfix
+include(cmake/build_acceleration.cmake)  # fast linker (mold/lld) + ccache
 
-else()
-  # Clang/GCC
-  add_compile_options(-Wall -Wextra)
-  if(ENABLE_STRICT_COMPILER)
+include(cmake/sanitizers.cmake)          # ASan/TSan/MSan/UBSan flags + deploy_asan_runtime()
+include(cmake/analyzers.cmake)           # clang-tidy discovery
+include(cmake/profiler.cmake)            # Tracy / Perfetto / ClangBuildAnalyzer (when enabled)
+include(cmake/configure_target.cmake)    # defines configure_target() — PCH, unity, tidy, profiler link, ASan deploy
 
-    add_compile_options(-Werror -pedantic) # more strict
-  endif()
+#=========================
+# Version Header
+#=========================
+if(GENERATE_VERSION_HEADER)
+  generate_version_header()
 endif()
 
-include(cmake/sanitizer_analyzer.cmake)
-include(cmake/profiler.cmake)
-
-#==============================================================================
+#=========================
 # Dependencies
-#==============================================================================
-find_package(fmt CONFIG REQUIRED)
-find_package(ftxui CONFIG REQUIRED)
-find_package(CLI11 CONFIG REQUIRED)
-find_package(tomlplusplus CONFIG REQUIRED)
+#=========================
+include(project_dependencies.cmake)
 
-include(FetchContent)
-FetchContent_Declare(
-  cpp_subprocess
-  GIT_REPOSITORY https://github.com/arun11299/cpp-subprocess.git
-  GIT_TAG master)
-FetchContent_MakeAvailable(cpp_subprocess)
+#=========================
+# Targets
+#=========================
+# Add or remove targets as needed
+if(BUILD_APP)
+  add_subdirectory(src/myapp) # standalone hello-world binary
+endif()
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples) # AFTER src/mylib so the example can link the MyLib target
+endif()
 
-#==============================================================================
-# Subdirectories
-#==============================================================================
-add_subdirectory(examples)
-
-#==============================================================================
-# Main Executable
-#==============================================================================
-add_executable(${PROJECT_NAME} src/main.cpp)
-
-# --- Include directories ---
-# target_include_directories(${PROJECT_NAME} PRIVATE path/to/folder)
-
-# --- Compile definitions ---
-# target_compile_definitions(${PROJECT_NAME} PRIVATE ANY_MACRO_HERE)
-
-# --- Core Dependencies ---
-target_link_libraries(
-  ${PROJECT_NAME}
-  PRIVATE fmt::fmt
-          CLI11::CLI11
-          ftxui::component
-          cpp-subprocess::subprocess
-          tomlplusplus::tomlplusplus)
+#=========================
+# Tests & Coverage
+#=========================
+if(BUILD_TESTING)
+  include(cmake/coverage.cmake) # coverage instrumentation + setup_coverage_target() (when ENABLE_COVERAGE)
+  enable_testing() # ctest / gtest_discover_tests register the unit tests
+  add_subdirectory(test)
+  if(ENABLE_COVERAGE AND TARGET unit_tests)
+    setup_coverage_target(unit_tests) # adds the `coverage` target (runs tests + reports)
+  endif()
+endif()

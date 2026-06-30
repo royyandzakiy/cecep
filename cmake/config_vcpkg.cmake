@@ -2,8 +2,8 @@
 # =============================================================================
 # VCPKG Configuration
 # =============================================================================
-if(NOT SETUP_VCPKG)
-  message(STATUS "Skip vcpkg installation check & setup")
+if(NOT PKG_MANAGER STREQUAL "vcpkg")
+  message(STATUS "Skip vcpkg (PKG_MANAGER=${PKG_MANAGER})")
   return()
 endif()
 
@@ -27,15 +27,26 @@ if(VCPKG_ROOT_PATH)
 else()
   message(STATUS "VCPKG_ROOT_PATH not yet set, finding vcpkg root...")
 
-  if(DEFINED ENV{VCPKG_ROOT})
+  # A path is a valid vcpkg root only if the toolchain file is present.
+  set(_vcpkg_toolchain_rel "scripts/buildsystems/vcpkg.cmake")
+
+  if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/${_vcpkg_toolchain_rel}")
     set(VCPKG_ROOT_PATH "$ENV{VCPKG_ROOT}")
-    message(STATUS "ENV\{VCPKG_ROOT\} already set: $ENV{VCPKG_ROOT}")
-  elseif(DEFINED ENV{VCPKG_ROOT_PATH})
-    message(STATUS "ENV\{VCPKG_ROOT_PATH\} already set: $ENV{VCPKG_ROOT_PATH}")
+    message(STATUS "ENV\{VCPKG_ROOT\}: $ENV{VCPKG_ROOT}")
+  elseif(DEFINED ENV{VCPKG_ROOT_PATH} AND EXISTS "$ENV{VCPKG_ROOT_PATH}/${_vcpkg_toolchain_rel}")
     set(VCPKG_ROOT_PATH "$ENV{VCPKG_ROOT_PATH}")
+    message(STATUS "ENV\{VCPKG_ROOT_PATH\}: $ENV{VCPKG_ROOT_PATH}")
   else()
+    # Warn loudly if an env var is set but stale, so the cause isn't silent.
+    if(DEFINED ENV{VCPKG_ROOT})
+      message(WARNING "[vcpkg] ENV{VCPKG_ROOT}='$ENV{VCPKG_ROOT}' has no ${_vcpkg_toolchain_rel} — ignoring and auto-detecting.")
+    endif()
+    if(DEFINED ENV{VCPKG_ROOT_PATH})
+      message(WARNING "[vcpkg] ENV{VCPKG_ROOT_PATH}='$ENV{VCPKG_ROOT_PATH}' has no ${_vcpkg_toolchain_rel} — ignoring and auto-detecting.")
+    endif()
     # Auto-detect: derive root from vcpkg executable if it's in PATH
     find_program(_vcpkg_exe vcpkg)
+
     if(_vcpkg_exe)
       get_filename_component(VCPKG_ROOT_PATH "${_vcpkg_exe}" DIRECTORY)
       message(STATUS "vcpkg.exe auto-detected via executable path: ${VCPKG_ROOT_PATH}")
@@ -82,7 +93,7 @@ else()
         " 3. Pass the path directly to the CMake command:\n"
         "    cmake -DVCPKG_ROOT_PATH=/path/to/vcpkg .\n\n"
         " 4. Create a local configuration file:\n"
-        "    Create 'local_options.cmake' and add:\n"
+        "    Create 'project_options.local.cmake' and add:\n"
         "    set(VCPKG_ROOT_PATH \"/path/to/vcpkg\")\n"
         "----------------------------------------------------------------------\n")
   endif()
