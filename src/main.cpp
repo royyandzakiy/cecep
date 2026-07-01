@@ -1,7 +1,7 @@
 #include <CLI/CLI.hpp>
-#include <array>
 #include <cpp-subprocess/subprocess.hpp>
 #include <cstdio>
+#include <filesystem>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <ftxui/component/component.hpp>
@@ -12,6 +12,7 @@
 #include <vector>
 
 namespace sp = subprocess;
+namespace fs = std::filesystem;
 
 std::string select_cpp_standard() {
 	using namespace ftxui;
@@ -39,7 +40,8 @@ std::string select_cpp_standard() {
 int main(int argc, char **argv) {
 	std::map<std::string, std::string> url_map{{"full", "https://github.com/royyandzakiy/cpp-project-template"},
 											   {"min", "https://github.com/royyandzakiy/cpp-project-template-min"}};
-	std::string selected_dest_folder{}, selected_template_type{};
+	std::string selected_template_type{};
+	fs::path selected_dest_folder{};
 
 	// run CLI
 	CLI::App app{"Cecep C++ Project Generator"};
@@ -61,17 +63,43 @@ int main(int argc, char **argv) {
 
 	const auto &url = url_map.at(selected_template_type);
 	fmt::println("Generating project from template: {} -> {}", selected_template_type, url);
-	fmt::println("Destination: {}", selected_dest_folder);
+	fmt::println("Destination: {}", selected_dest_folder.string());
 
 	// menu: show cpp standard
 	// auto cpp_std = select_cpp_standard();
 	// fmt::println("std: {}", cpp_std);
 
 	// run git clone, change folder name
-	auto p = sp::Popen({"git", "clone", url, selected_dest_folder}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	auto p = sp::Popen({"git", "clone", url, selected_dest_folder.string()}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
 	auto rc = p.wait();
 	if (rc != 0)
 		fmt::println(stderr, "Git clone error code: {}", rc);
+
+	// delete .git & readme, git init
+	try {
+		fs::path readme_path = selected_dest_folder / "README.md";
+		fs::path git_path = selected_dest_folder / ".git";
+
+		if (selected_template_type == "full") {
+			if (!fs::remove(readme_path)) {
+				fmt::println("README.md file does not exist");
+			}
+		}
+
+		if (!fs::remove_all(git_path)) {
+			fmt::println(".git Folder does not exist");
+		}
+
+		auto current_path = fs::current_path();
+		fs::current_path(selected_dest_folder);
+		auto p = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+		auto rc = p.wait();
+		fs::current_path(current_path);
+		if (rc != 0)
+			fmt::println(stderr, "Git init error code: {}", rc);
+	} catch (const fs::filesystem_error &e) {
+		fmt::println(stderr, "Error: {}", e.what());
+	}
 
 	return 0;
 }
