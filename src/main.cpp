@@ -37,7 +37,7 @@ std::string select_cpp_standard() {
 	return std_opt.at(std_selected);
 }
 
-int main(int argc, char **argv) {
+auto main(int argc, char **argv) -> int {
 	std::map<std::string, std::string> url_map{{"full", "https://github.com/royyandzakiy/cpp-project-template"},
 											   {"min", "https://github.com/royyandzakiy/cpp-project-template-min"}};
 	std::string selected_template_type{};
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 		->check(CLI::IsMember({"full", "min"})) // Validate input
 		->capture_default_str();
 
-	CLI11_PARSE(app, argc, argv);
+	app.parse(argc, argv);
 
 	if (!url_map.contains(selected_template_type)) {
 		fmt::println(stderr, "Template '{}' not found", selected_template_type);
@@ -76,30 +76,30 @@ int main(int argc, char **argv) {
 		fmt::println(stderr, "Git clone error code: {}", rc);
 
 	// delete .git & readme, git init
-	try {
-		fs::path readme_path = selected_dest_folder / "README.md";
-		fs::path git_path = selected_dest_folder / ".git";
+	// try {
+	fs::path readme_path = selected_dest_folder / "README.md";
+	fs::path git_path = selected_dest_folder / ".git";
 
-		if (selected_template_type == "full") {
-			if (!fs::remove(readme_path)) {
-				fmt::println("README.md file does not exist");
-			}
+	if (selected_template_type == "full") {
+		if (!fs::remove(readme_path)) {
+			fmt::println("README.md file does not exist");
 		}
-
-		if (!fs::remove_all(git_path)) {
-			fmt::println(".git Folder does not exist");
-		}
-
-		auto current_path = fs::current_path();
-		fs::current_path(selected_dest_folder);
-		auto p = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
-		auto rc = p.wait();
-		fs::current_path(current_path);
-		if (rc != 0)
-			fmt::println(stderr, "Git init error code: {}", rc);
-	} catch (const fs::filesystem_error &e) {
-		fmt::println(stderr, "Error: {}", e.what());
 	}
+
+	if (!fs::remove_all(git_path)) {
+		fmt::println(".git Folder does not exist");
+	}
+
+	auto current_path = fs::current_path();
+	fs::current_path(selected_dest_folder);
+	auto p2 = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	rc = p2.wait();
+	fs::current_path(current_path);
+	if (rc != 0)
+		fmt::println(stderr, "Git init error code: {}", rc);
+	// } catch (const fs::filesystem_error &e) {
+	// 	fmt::println(stderr, "Error: {}", e.what());
+	// }
 
 	return 0;
 }

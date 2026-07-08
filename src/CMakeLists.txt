@@ -60,4 +60,8 @@ target_link_libraries(${PROJECT_NAME}
 # See cmake/configure_target.cmake for implementation details.
 configure_target(${PROJECT_NAME})
 
+if (ENABLE_SANITIZERS)
+  target_enable_sanitizers(${PROJECT_NAME})
+endif()
+
 message(STATUS "${PROJECT_NAME} configured (standalone executable)")
