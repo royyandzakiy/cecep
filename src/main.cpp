@@ -38,10 +38,19 @@ std::string select_cpp_standard() {
 }
 
 auto main(int argc, char **argv) -> int {
-	std::map<std::string, std::string> url_map{{"full", "https://github.com/royyandzakiy/cpp-project-template"},
-											   {"min", "https://github.com/royyandzakiy/cpp-project-template-min"}};
+	std::map<std::string, std::string> url_map{
+		{"full", "https://github.com/royyandzakiy/cpp-project-template"},
+		{"min", "https://github.com/royyandzakiy/cpp-project-template-min"},
+		{"zephyr", "https://github.com/royyandzakiy/zephyr-project-template.git"},
+	};
 	std::string selected_template_type{};
 	fs::path selected_dest_folder{};
+
+	// Build the validator list from url_map keys so new entries "just work"
+	std::vector<std::string> template_keys;
+	template_keys.reserve(url_map.size());
+	for (const auto &[k, _] : url_map)
+		template_keys.push_back(k);
 
 	// run CLI
 	CLI::App app{"Cecep C++ Project Generator"};
@@ -51,7 +60,7 @@ auto main(int argc, char **argv) -> int {
 		->capture_default_str();
 	app.add_option("type,-t,--type", selected_template_type, "The type of template")
 		->default_val("min")
-		->check(CLI::IsMember({"full", "min"})) // Validate input
+		->check(CLI::IsMember(template_keys)) // Validate input against url_map keys
 		->capture_default_str();
 
 	app.parse(argc, argv);
@@ -72,22 +81,28 @@ auto main(int argc, char **argv) -> int {
 	// run git clone, change folder name
 	auto p = sp::Popen({"git", "clone", url, selected_dest_folder.string()}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
 	auto rc = p.wait();
-	if (rc != 0)
+	if (rc != 0) {
 		fmt::println(stderr, "Git clone error code: {}", rc);
+		return rc;
+	}
 
 	// delete .git & readme, git init
-	// try {
 	fs::path readme_path = selected_dest_folder / "README.md";
 	fs::path git_path = selected_dest_folder / ".git";
 
-	if (selected_template_type == "full") {
-		if (!fs::remove(readme_path)) {
-			fmt::println("README.md file does not exist");
-		}
+	std::error_code ec;
+	if (!fs::remove(readme_path, ec) && !ec) {
+		fmt::println("README.md file does not exist");
+	} else if (ec) {
+		fmt::println(stderr, "Failed to remove README.md: {}", ec.message());
+		ec.clear();
 	}
 
-	if (!fs::remove_all(git_path)) {
+	if (!fs::remove_all(git_path, ec) && !ec) {
 		fmt::println(".git Folder does not exist");
+	} else if (ec) {
+		fmt::println(stderr, "Failed to remove .git: {}", ec.message());
+		ec.clear();
 	}
 
 	auto current_path = fs::current_path();
@@ -95,11 +110,10 @@ auto main(int argc, char **argv) -> int {
 	auto p2 = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
 	rc = p2.wait();
 	fs::current_path(current_path);
-	if (rc != 0)
+	if (rc != 0) {
 		fmt::println(stderr, "Git init error code: {}", rc);
-	// } catch (const fs::filesystem_error &e) {
-	// 	fmt::println(stderr, "Error: {}", e.what());
-	// }
+		return rc;
+	}
 
 	return 0;
 }
