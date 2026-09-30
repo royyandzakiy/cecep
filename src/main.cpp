@@ -1,4 +1,5 @@
 #include <CLI/CLI.hpp>
+#include <array>
 #include <cpp-subprocess/subprocess.hpp>
 #include <cstdio>
 #include <filesystem>
@@ -9,10 +10,20 @@
 #include <ftxui/dom/elements.hpp>
 #include <map>
 #include <string>
+#include <string_view>
+#include <system_error>
+#include <utility>
 #include <vector>
 
 namespace sp = subprocess;
 namespace fs = std::filesystem;
+
+constexpr std::array<std::pair<std::string_view, std::string_view>, 4> template_type_map{{
+	{"full", "https://github.com/royyandzakiy/cpp-project-template"},
+	{"min", "https://github.com/royyandzakiy/cpp-project-template-min"},
+	{"zephyr", "https://github.com/royyandzakiy/zephyr-project-template"},
+	{"idf", "https://github.com/royyandzakiy/esp-idf-project-template"},
+}};
 
 std::string select_cpp_standard() {
 	using namespace ftxui;
@@ -37,22 +48,84 @@ std::string select_cpp_standard() {
 	return std_opt.at(std_selected);
 }
 
+/// Clone `url` into `dest`. Returns the process exit code (0 on success).
+int clone_template(const std::string &url, const fs::path &dest) {
+	auto p = sp::Popen({"git", "clone", url, dest.string()}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	auto err = p.wait();
+	if (err != 0) {
+		fmt::println(stderr, "Git clone error code: {}", err);
+	}
+	return err;
+}
+
+/// Remove a single file, logging if it was missing or failed.
+void remove_file(const fs::path &path) {
+	std::error_code err;
+	if (!fs::remove(path, err) && !err) {
+		fmt::println("{} does not exist", path.filename().string());
+	} else if (err) {
+		fmt::println(stderr, "Failed to remove {}: {}", path.string(), err.message());
+	}
+}
+
+/// Recursively remove a directory, logging if it was missing or failed.
+void remove_dir(const fs::path &path) {
+	std::error_code err;
+	if (!fs::remove_all(path, err) && !err) {
+		fmt::println("{} folder does not exist", path.filename().string());
+	} else if (err) {
+		fmt::println(stderr, "Failed to remove {}: {}", path.string(), err.message());
+	}
+}
+
+/// Remove the cloned template's metadata (.git, README.md) and re-init git.
+/// Returns the process exit code of `git init` (0 on success).
+int reset_template_repo(const fs::path &dest) {
+	remove_file(dest / "README.md");
+	remove_dir(dest / ".git");
+
+	auto current_path = fs::current_path();
+	fs::current_path(dest);
+
+	auto p = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	auto err = p.wait();
+
+	fs::current_path(current_path);
+	if (err != 0) {
+		fmt::println(stderr, "Git init error code: {}", err);
+	}
+	return err;
+}
+
+/// Returns the URL for `key`, or an empty string_view if not found.
+std::string_view find_template_url(std::string_view key) {
+	for (const auto &[k, v] : template_type_map)
+		if (k == key)
+			return v;
+	return {};
+}
+
+/// Clone `url` into `dest`. Returns the process exit code (0 on success).
+int clone_template(std::string_view url, const fs::path &dest) {
+	auto p = sp::Popen({"git", "clone", std::string(url), dest.string()}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
+	auto err = p.wait();
+	if (err != 0) {
+		fmt::println(stderr, "Git clone error code: {}", err);
+	}
+	return err;
+}
+
 auto main(int argc, char **argv) -> int {
-	std::map<std::string, std::string> url_map{
-		{"full", "https://github.com/royyandzakiy/cpp-project-template"},
-		{"min", "https://github.com/royyandzakiy/cpp-project-template-min"},
-		{"zephyr", "https://github.com/royyandzakiy/zephyr-project-template.git"},
-	};
 	std::string selected_template_type{};
 	fs::path selected_dest_folder{};
 
-	// Build the validator list from url_map keys so new entries "just work"
-	std::vector<std::string> template_keys;
-	template_keys.reserve(url_map.size());
-	for (const auto &[k, _] : url_map)
-		template_keys.push_back(k);
+	// template type list
+	std::vector<std::string_view> template_types;
+	template_types.reserve(template_type_map.size());
+	for (const auto &[k, _] : template_type_map)
+		template_types.push_back(k);
 
-	// run CLI
+	// parse CLI options
 	CLI::App app{"Cecep C++ Project Generator"};
 	argv = app.ensure_utf8(argv);
 	app.add_option("dest,-d,--dest", selected_dest_folder, "The folder destination")
@@ -60,17 +133,17 @@ auto main(int argc, char **argv) -> int {
 		->capture_default_str();
 	app.add_option("type,-t,--type", selected_template_type, "The type of template")
 		->default_val("min")
-		->check(CLI::IsMember(template_keys)) // Validate input against url_map keys
+		->check(CLI::IsMember(template_types)) // Validate input against template_type_map keys
 		->capture_default_str();
 
 	app.parse(argc, argv);
 
-	if (!url_map.contains(selected_template_type)) {
+	const auto url = find_template_url(selected_template_type);
+	if (url.empty()) {
 		fmt::println(stderr, "Template '{}' not found", selected_template_type);
 		return 1;
 	}
 
-	const auto &url = url_map.at(selected_template_type);
 	fmt::println("Generating project from template: {} -> {}", selected_template_type, url);
 	fmt::println("Destination: {}", selected_dest_folder.string());
 
@@ -79,41 +152,16 @@ auto main(int argc, char **argv) -> int {
 	// fmt::println("std: {}", cpp_std);
 
 	// run git clone, change folder name
-	auto p = sp::Popen({"git", "clone", url, selected_dest_folder.string()}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
-	auto rc = p.wait();
-	if (rc != 0) {
-		fmt::println(stderr, "Git clone error code: {}", rc);
-		return rc;
+	if (auto err = clone_template(url, selected_dest_folder); err != 0) {
+		return err;
 	}
 
 	// delete .git & readme, git init
-	fs::path readme_path = selected_dest_folder / "README.md";
-	fs::path git_path = selected_dest_folder / ".git";
-
-	std::error_code ec;
-	if (!fs::remove(readme_path, ec) && !ec) {
-		fmt::println("README.md file does not exist");
-	} else if (ec) {
-		fmt::println(stderr, "Failed to remove README.md: {}", ec.message());
-		ec.clear();
+	if (auto err = reset_template_repo(selected_dest_folder); err != 0) {
+		return err;
 	}
 
-	if (!fs::remove_all(git_path, ec) && !ec) {
-		fmt::println(".git Folder does not exist");
-	} else if (ec) {
-		fmt::println(stderr, "Failed to remove .git: {}", ec.message());
-		ec.clear();
-	}
-
-	auto current_path = fs::current_path();
-	fs::current_path(selected_dest_folder);
-	auto p2 = sp::Popen({"git", "init"}, sp::output{sp::PIPE}, sp::error{sp::PIPE});
-	rc = p2.wait();
-	fs::current_path(current_path);
-	if (rc != 0) {
-		fmt::println(stderr, "Git init error code: {}", rc);
-		return rc;
-	}
+	fmt::println("Project generation successful!", selected_dest_folder.string());
 
 	return 0;
 }
